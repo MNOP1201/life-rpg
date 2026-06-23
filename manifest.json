@@ -1,13 +1,28 @@
 {
     "name": "Life RPG",
     "short_name": "Life RPG",
-    "start_url": "/life-rpg/",
+    "start_url": "/life-rpg/index.html",
+    "scope": "/life-rpg/",
     "display": "standalone",
+    "display_override": ["standalone", "fullscreen"],
+    "orientation": "portrait",
     "background_color": "#0a0a14",
     "theme_color": "#0a0a14",
-    "icons": [{
-        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚔️</text></svg>",
-        "sizes": "100x100",
-        "type": "image/svg+xml"
-    }]
+    "description": "Прокачка себя в реальной жизни",
+    "lang": "ru",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230a0a14'/><text x='256' y='340' font-size='350' text-anchor='middle' fill='%23ffd700'>⚔️</text></svg>",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230a0a14'/><text x='96' y='130' font-size='130' text-anchor='middle' fill='%23ffd700'>⚔️</text></svg>",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "prefer_related_applications": false
 }
