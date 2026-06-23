@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#0a0a14">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚔️</text></svg>">
-    <title>Life RPG v2.7</title>
+    <title>Life RPG v2.8</title>
     <style>
         :root {
             --bg: #0a0a14;
@@ -19,7 +19,6 @@
             --subtext: #888;
             --gold: #ffd700;
             --accent: #3d5afe;
-            --xp-fill: #ffd700, #ff8c00;
             --water-bg: #1a1a30;
             --water-fill: #1565c0;
         }
@@ -81,7 +80,6 @@
         .btn-undo{background:#444;color:#aaa;border:1px solid #555}
         .btn-over{background:#1a3a5c;color:#fff;border:1px solid #1565c0}
         .btn-refresh{background:#5d3a1a;color:#fff;border:1px solid #8d6e2a;font-size:9px;padding:6px 10px}
-        .btn-restore{background:#6a1b9a;color:#fff;border:1px solid #9c27b0;font-size:9px;padding:6px 10px}
         .water-section{background:var(--card);border-radius:12px;padding:12px;margin:6px 0;border:1px solid var(--border)}
         .water-title{font-size:12px;font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
         .water-glasses{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:8px 0}
@@ -115,31 +113,22 @@
         .ach-name{font-size:11px;font-weight:600;color:var(--gold)}
         .ach-desc{font-size:9px;color:var(--subtext)}
         .ach-locked{opacity:0.35;filter:grayscale(1)}
-        .web-container{position:relative;width:100%;max-width:360px;height:360px;margin:10px auto}
-        .web-svg{width:100%;height:100%}
-        .web-node{fill:var(--card);stroke:var(--border);stroke-width:2;cursor:pointer;transition:all 0.3s}
-        .web-node.unlocked{fill:var(--accent);stroke:var(--gold)}
-        .web-line{stroke:var(--border);stroke-width:2;fill:none;transition:all 0.3s}
-        .web-line.active{stroke:var(--gold)}
-        .web-label{fill:var(--subtext);font-size:8px;text-anchor:middle}
-        .web-branch-label{fill:var(--text);font-size:10px;font-weight:600;text-anchor:middle}
         .xp-popup{position:fixed;pointer-events:none;font-weight:900;font-size:18px;color:var(--gold);text-shadow:0 0 10px var(--gold);animation:floatUp 1s ease-out forwards;z-index:200}
         @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-50px) scale(1.3)}}
         .btn-add{background:#6a1b9a;color:#fff;width:100%;padding:8px;border-radius:20px;font-size:11px;margin:4px 0}
         .streak{text-align:center;font-size:11px;color:var(--gold);margin:3px 0}
-        .timer-display{font-size:36px;font-weight:900;text-align:center;color:var(--gold);margin:10px 0}
-        .timer-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-        .web-legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:8px;margin:6px 0}
-        .web-legend-item{display:flex;align-items:center;gap:3px}
-        .web-legend-dot{width:10px;height:10px;border-radius:50%;border:1px solid var(--border)}
-        .web-legend-dot.unlocked{background:var(--accent);border-color:var(--gold)}
+        .timer-display{font-size:42px;font-weight:900;text-align:center;color:var(--gold);margin:10px 0;font-family:monospace}
+        .timer-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+        .timer-label{text-align:center;font-size:10px;color:var(--subtext);margin-top:4px}
+        .custom-task-row{display:flex;gap:4px;align-items:center}
+        .custom-task-row input{flex:1}
     </style>
 </head>
 <body>
     <div class="app" id="app"></div>
     <script>
-        // ==================== LIFE RPG v2.7 — ПАУТИНА ====================
-        let data = JSON.parse(localStorage.getItem('lifeRpgv27')) || {
+        // ==================== LIFE RPG v2.8 ====================
+        let data = JSON.parse(localStorage.getItem('lifeRpgv28')) || {
             health: { xp: 0, level: 1 },
             sport: { xp: 0, level: 1 },
             mind: { xp: 0, level: 1 },
@@ -155,22 +144,12 @@
             dailyTasksDate: '',
             streak: 0, lastActiveDate: '',
             theme: 'dark', dailyRefreshUsed: false,
-            // Паутина
-            webBranches: {
-                health: { name: '❤️ Здоровье', task: '🧘 Медитация 7 мин', stat: 'health', chain: [3,7,12,18,25,30], progress: 0, restored: false, broken: false },
-                sport: { name: '💪 Спорт', task: '⏱️ Планка 1 мин', stat: 'sport', chain: [3,7,12,18,25,30], progress: 0, restored: false, broken: false },
-                mind: { name: '🧠 Самопознание', task: '🚫 Без дрочки', stat: 'mind', chain: [2,3,4,5,6,7,8,9,10], progress: 0, restored: false, broken: false },
-                hygiene: { name: '✨ Гигиена', task: '💆 Массаж лица от отёков', stat: 'hygiene', chain: [3,7,12,18,25,30], progress: 0, restored: false, broken: false },
-                custom1: { name: '✏️ Своя ветка 1', task: null, stat: null, chain: [3,7,12,18,25,30], progress: 0, restored: false, broken: false },
-                custom2: { name: '✏️ Своя ветка 2', task: null, stat: null, chain: [3,7,12,18,25,30], progress: 0, restored: false, broken: false },
-            },
-            webLog: {}, // { branchId: { date: bool } }
         };
 
-        const XP_PER_LEVEL = 100;
-        const GLOBAL_XP_PER_LEVEL = 400;
+        const XP_PER_LEVEL = 150; // Повышенная планка
+        const GLOBAL_XP_PER_LEVEL = 600; // Больше XP для общего уровня
 
-        function save() { localStorage.setItem('lifeRpgv27', JSON.stringify(data)); }
+        function save() { localStorage.setItem('lifeRpgv28', JSON.stringify(data)); }
         function getToday() { return new Date().toDateString(); }
         function getDateKey() { return new Date().toISOString().split('T')[0]; }
         function getStatName(s) { return { health: '❤️ Здоровье', sport: '💪 Спорт', mind: '🧠 Самопознание', hygiene: '✨ Гигиена' }[s] || s; }
@@ -212,28 +191,36 @@
             { name: '🍵 Зелёный чай', reward: 15, stat: 'health', maxOver: 4 },
             { name: '🍎 2 фрукта', reward: 15, stat: 'health', maxOver: 3 },
             { name: '💊 Витамины', reward: 15, stat: 'health', maxOver: 2 },
-            { name: '🥤 Смузи', reward: 20, stat: 'health', maxOver: 2 },
+            { name: '🥤 Смузи/фреш', reward: 20, stat: 'health', maxOver: 2 },
             { name: '🚫 Без фастфуда', reward: 30, stat: 'health', maxOver: 1 },
+            { name: '🥑 Полезный завтрак', reward: 20, stat: 'health', maxOver: 2 },
+            { name: '🥜 Горсть орехов', reward: 10, stat: 'health', maxOver: 4 },
             { name: '⏱️ Планка 1 мин', reward: 25, stat: 'sport', maxOver: 3 },
             { name: '🚶 Прогулка 20 мин', reward: 30, stat: 'sport', maxOver: 2 },
             { name: '🤸 Растяжка 10 мин', reward: 25, stat: 'sport', maxOver: 3 },
             { name: '🦵 50 приседаний', reward: 25, stat: 'sport', maxOver: 3 },
             { name: '☀️ Зарядка 10 мин', reward: 20, stat: 'sport', maxOver: 2 },
-            { name: '💪 Отжимания 20', reward: 25, stat: 'sport', maxOver: 3 },
+            { name: '💪 Отжимания 20 раз', reward: 25, stat: 'sport', maxOver: 3 },
             { name: '🏃 Пробежка 15 мин', reward: 30, stat: 'sport', maxOver: 2 },
+            { name: '🕺 Танцы 10 мин', reward: 25, stat: 'sport', maxOver: 2 },
+            { name: '🧘‍♂️ 10000 шагов', reward: 35, stat: 'sport', maxOver: 1 },
             { name: '📖 Чтение 15 стр', reward: 25, stat: 'mind', maxOver: 3 },
             { name: '🧘 Медитация 5 мин', reward: 20, stat: 'mind', maxOver: 3 },
             { name: '🙏 3 благодарности', reward: 20, stat: 'mind', maxOver: 2 },
-            { name: '📝 Дневник', reward: 20, stat: 'mind', maxOver: 2 },
+            { name: '📝 Дневник мыслей', reward: 20, stat: 'mind', maxOver: 2 },
             { name: '📵 Час без телефона', reward: 25, stat: 'mind', maxOver: 3 },
-            { name: '📚 Учить слова', reward: 15, stat: 'mind', maxOver: 5 },
+            { name: '📚 Учить новое слово', reward: 15, stat: 'mind', maxOver: 5 },
             { name: '🎧 Подкаст 20 мин', reward: 20, stat: 'mind', maxOver: 2 },
+            { name: '📿 Аффирмации', reward: 20, stat: 'mind', maxOver: 3 },
+            { name: '🧩 Головоломка', reward: 15, stat: 'mind', maxOver: 3 },
             { name: '🚿 Контрастный душ', reward: 30, stat: 'hygiene', maxOver: 2 },
             { name: '🧴 Маска для лица', reward: 20, stat: 'hygiene', maxOver: 2 },
+            { name: '🛏️ Сменить бельё', reward: 25, stat: 'hygiene', maxOver: 1 },
             { name: '🧹 Уборка 15 мин', reward: 20, stat: 'hygiene', maxOver: 2 },
-            { name: '🧼 Скраб', reward: 20, stat: 'hygiene', maxOver: 1 },
+            { name: '🧼 Скраб для лица', reward: 20, stat: 'hygiene', maxOver: 1 },
             { name: '🧴 Увлажнить кожу', reward: 15, stat: 'hygiene', maxOver: 3 },
-            { name: '💆 Массаж лица', reward: 20, stat: 'hygiene', maxOver: 2 },
+            { name: '💆 Массаж лица от отёков', reward: 20, stat: 'hygiene', maxOver: 2 },
+            { name: '🪥 Ирригатор/зубная нить', reward: 15, stat: 'hygiene', maxOver: 2 },
         ];
 
         function generateDailyTasks() {
@@ -242,16 +229,16 @@
         }
 
         function getCachedDailyTasks() {
-            let c = localStorage.getItem('dailyTasksCachev27');
+            let c = localStorage.getItem('dailyTasksCachev28');
             if (!c) { c = JSON.stringify(generateDailyTasks());
-                localStorage.setItem('dailyTasksCachev27', c); }
+                localStorage.setItem('dailyTasksCachev28', c); }
             return JSON.parse(c);
         }
 
         function refreshDailyTasks() {
             if (data.dailyRefreshUsed) return;
             data.dailyRefreshUsed = true;
-            localStorage.setItem('dailyTasksCachev27', JSON.stringify(generateDailyTasks()));
+            localStorage.setItem('dailyTasksCachev28', JSON.stringify(generateDailyTasks()));
             save();
             render();
         }
@@ -268,9 +255,6 @@
                     if (ad && yh.water >= 6) data.streak++;
                     else data.streak = 0;
                 } else data.streak = 0;
-
-                // Проверка паутины за вчера
-                updateWebProgress(yk);
             }
             if (data.dailyTasksDate !== today) {
                 if (data.dailyTasksDate) {
@@ -289,97 +273,10 @@
                 data.sleepState = null;
                 data.sleepDay = '';
                 data.dailyRefreshUsed = false;
-                localStorage.setItem('dailyTasksCachev27', JSON.stringify(generateDailyTasks()));
+                localStorage.setItem('dailyTasksCachev28', JSON.stringify(generateDailyTasks()));
             }
             data.lastActiveDate = today;
             save();
-        }
-
-        function updateWebProgress(dateKey) {
-            for (let [bid, branch] of Object.entries(data.webBranches)) {
-                if (branch.broken) continue;
-                const done = checkWebTaskDone(bid, dateKey);
-                if (!data.webLog[bid]) data.webLog[bid] = {};
-                data.webLog[bid][dateKey] = done;
-
-                if (done) {
-                    branch.progress++;
-                } else {
-                    if (branch.progress > 0 && !branch.restored) {
-                        branch.restored = true;
-                        // первое восстановление — не сбрасываем
-                    } else if (branch.progress > 0) {
-                        branch.progress = 0;
-                        branch.broken = true;
-                    }
-                }
-                // Проверка ачивок
-                if (branch.progress > 0 && branch.chain.includes(branch.progress) && !data.achievements.includes(`${bid}_${branch.progress}`)) {
-                    data.achievements.push(`${bid}_${branch.progress}`);
-                    const bonus = branch.progress >= 30 ? 100 : branch.progress >= 25 ? 50 : branch.progress >= 18 ? 30 : branch.progress >= 12 ? 20 : branch.progress >= 7 ? 15 : 10;
-                    addXp(branch.stat || 'health', bonus);
-                    if (branch.progress >= 25) grantReward('big');
-                    else if (branch.progress >= 18) grantReward('medium');
-                }
-            }
-            save();
-        }
-
-        function checkWebTaskDone(bid, dateKey) {
-            // Проверяем, выполнено ли задание ветки в указанный день
-            const h = data.history[dateKey];
-            if (!h) return false;
-            const branch = data.webBranches[bid];
-            // Ищем задание в истории
-            if (bid === 'health') {
-                // Медитация 7 мин — ищем в daily заданиях
-                return h.daily && Object.entries(h.daily).some(([tid, count]) => {
-                    const tasks = getCachedDailyTasks();
-                    const t = tasks.find(x => x.id === tid);
-                    return t && t.name.includes('Медитация') && count > 0;
-                });
-            }
-            if (bid === 'sport') {
-                return h.daily && Object.entries(h.daily).some(([tid, count]) => {
-                    const tasks = getCachedDailyTasks();
-                    const t = tasks.find(x => x.id === tid);
-                    return t && t.name.includes('Планка') && count > 0;
-                });
-            }
-            if (bid === 'mind') {
-                // Без дрочки — проверяем custom или daily
-                return h.daily && Object.entries(h.daily).some(([tid, count]) => {
-                    const tasks = getCachedDailyTasks();
-                    const t = tasks.find(x => x.id === tid);
-                    return t && (t.name.includes('Без дрочки') || t.name.includes('воздерж')) && count > 0;
-                }) || (h.mandatory && Object.values(h.mandatory).some(v => v > 0));
-            }
-            if (bid === 'hygiene') {
-                return h.daily && Object.entries(h.daily).some(([tid, count]) => {
-                    const tasks = getCachedDailyTasks();
-                    const t = tasks.find(x => x.id === tid);
-                    return t && t.name.includes('Массаж лица') && count > 0;
-                });
-            }
-            if (bid === 'custom1' || bid === 'custom2') {
-                if (!branch.task) return false;
-                return h.daily && Object.entries(h.daily).some(([tid, count]) => {
-                    return tid.includes('custom_') && count > 0;
-                });
-            }
-            return false;
-        }
-
-        function restoreWebBranch(bid) {
-            const branch = data.webBranches[bid];
-            if (!branch) return;
-            if (branch.broken) {
-                branch.broken = false;
-                branch.restored = true;
-                branch.progress = Math.max(0, branch.progress);
-                save();
-                render();
-            }
         }
 
         function completeTask(taskId, isMandatory, btnElement) {
@@ -393,7 +290,18 @@
             } else {
                 const tasks = getCachedDailyTasks();
                 const t = tasks.find(x => x.id === taskId);
-                if (!t) return;
+                // Проверяем свои задания тоже
+                if (!t) {
+                    const ct = data.customTasks.find(x => x.id === taskId);
+                    if (!ct) return;
+                    const c = data.todayDaily[taskId] || 0;
+                    if (c >= ct.maxOver) return;
+                    data.todayDaily[taskId] = c + 1;
+                    addXp(ct.stat, ct.reward);
+                    save();
+                    render();
+                    return;
+                }
                 const c = data.todayDaily[taskId] || 0;
                 if (c >= t.maxOver) return;
                 data.todayDaily[taskId] = c + 1;
@@ -403,13 +311,11 @@
                 const r = btnElement.getBoundingClientRect();
                 spawnXpPopup(r.left + r.width / 2 - 20, r.top - 10, '+XP');
             }
-            // Отмечаем прогресс паутины за сегодня
             const dk = getDateKey();
             if (!data.history[dk]) data.history[dk] = { mandatory: {}, daily: {}, water: 0, sleep: null,
                 waterOverBonus: 0 };
             if (isMandatory) data.history[dk].mandatory[taskId] = (data.history[dk].mandatory[taskId] || 0) + 1;
             else data.history[dk].daily[taskId] = (data.history[dk].daily[taskId] || 0) + 1;
-            updateWebProgress(dk);
             save();
             render();
         }
@@ -427,7 +333,7 @@
                 const c = data.todayDaily[taskId] || 0;
                 if (c <= 0) return;
                 const tasks = getCachedDailyTasks();
-                const t = tasks.find(x => x.id === taskId);
+                const t = tasks.find(x => x.id === taskId) || data.customTasks.find(x => x.id === taskId);
                 if (!t) return;
                 data.todayDaily[taskId] = c - 1;
                 if (data.todayDaily[taskId] <= 0) delete data.todayDaily[taskId];
@@ -484,7 +390,7 @@
                 data.dailyTasksDate = getToday();
                 data.sleepDay = '';
                 data.dailyRefreshUsed = false;
-                localStorage.setItem('dailyTasksCachev27', JSON.stringify(generateDailyTasks()));
+                localStorage.setItem('dailyTasksCachev28', JSON.stringify(generateDailyTasks()));
                 save();
                 render();
             }
@@ -518,8 +424,8 @@
         function grantReward(tier) {
             const pool = {
                 small: ['🍫 Вкусняшка', '☕ Любимый напиток', '🎵 Альбом', '📺 Серия'],
-                medium: ['🍕 Доставка', '🚶 Прогулка', '📖 Книга', '🎬 Кино'],
-                big: ['🎁 Покупка до 2000₽', '🧖 SPA', '🍔 Читмил', '🚴 Поездка'],
+                medium: ['🍕 Доставка еды', '🚶 Прогулка', '📖 Книга', '🎬 Кино'],
+                big: ['🎁 Покупка до 2000₽', '🧖 SPA-день', '🍔 Читмил', '🚴 Поездка'],
                 legendary: ['✈️ Путешествие', '🎪 Концерт', '💻 Гаджет', '🏨 Отель']
             } [tier] || ['🎁 Награда'];
             const rw = pool[Math.floor(Math.random() * pool.length)];
@@ -536,13 +442,9 @@
             ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
         }
 
-        function addCustomTask(name, stat, xp, maxOver, branchId) {
-            const t = { id: 'custom_' + Date.now(), name, stat, reward: parseInt(xp), maxOver: parseInt(maxOver) || 3, date: getDateKey() };
+        function addCustomTask(name, stat, xp, maxOver) {
+            const t = { id: 'custom_' + Date.now(), name, stat, reward: parseInt(xp), maxOver: parseInt(maxOver) || 3 };
             data.customTasks.push(t);
-            if (branchId && data.webBranches[branchId]) {
-                data.webBranches[branchId].task = name;
-                data.webBranches[branchId].stat = stat;
-            }
             save();
             render();
         }
@@ -560,27 +462,79 @@
             render();
         }
 
-        // ============ ТАЙМЕР ============
+        // ============ ТАЙМЕР + СЕКУНДОМЕР ============
         let timerInterval = null,
-            timerSeconds = 0;
+            timerSeconds = 0,
+            timerMode = 'timer'; // 'timer' | 'stopwatch'
 
-        function startTimer(sec) {
+        function openTimerModal() {
             stopTimer();
-            timerSeconds = sec;
+            timerSeconds = 0;
+            timerMode = 'timer';
             const ov = document.createElement('div');
             ov.className = 'modal-overlay';
             ov.id = 'timerModal';
-            ov.innerHTML = `<div class="modal" style="text-align:center"><h3>⏱️ Таймер</h3><div class="timer-display" id="td">${formatTime(timerSeconds)}</div><div class="timer-btns"><button class="btn btn-undo" onclick="stopTimer();document.getElementById('timerModal').remove()">❌</button></div></div>`;
+            ov.innerHTML = `
+                <div class="modal" style="text-align:center">
+                    <h3>⏱️ Таймер / Секундомер</h3>
+                    <div class="timer-display" id="td">0:00</div>
+                    <div class="timer-label" id="tl">Таймер</div>
+                    <div class="timer-btns" id="timerPresets">
+                        <button class="btn btn-done" onclick="setTimer(60)">1м</button>
+                        <button class="btn btn-done" onclick="setTimer(180)">3м</button>
+                        <button class="btn btn-done" onclick="setTimer(300)">5м</button>
+                        <button class="btn btn-done" onclick="setTimer(600)">10м</button>
+                        <button class="btn btn-done" onclick="setTimer(900)">15м</button>
+                        <button class="btn btn-done" onclick="setTimer(1200)">20м</button>
+                    </div>
+                    <div class="timer-btns">
+                        <button class="btn btn-over" onclick="startStopwatch()">⏱️ Секундомер</button>
+                        <button class="btn btn-done" id="timerStartBtn" onclick="startTimerCountdown()">▶️</button>
+                        <button class="btn btn-undo" onclick="stopTimer();document.getElementById('timerModal').remove()">❌</button>
+                    </div>
+                </div>`;
             document.body.appendChild(ov);
+        }
+
+        function setTimer(sec) {
+            timerMode = 'timer';
+            timerSeconds = sec;
+            document.getElementById('td').textContent = formatTime(timerSeconds);
+            document.getElementById('tl').textContent = 'Таймер';
+            document.getElementById('timerStartBtn').textContent = '▶️';
+        }
+
+        function startStopwatch() {
+            timerMode = 'stopwatch';
+            timerSeconds = 0;
+            document.getElementById('td').textContent = '0:00';
+            document.getElementById('tl').textContent = 'Секундомер';
+            document.getElementById('timerStartBtn').textContent = '▶️';
+            startTimerCountdown();
+        }
+
+        function startTimerCountdown() {
+            stopTimer();
+            if (timerMode === 'timer' && timerSeconds <= 0) return;
+            const startTime = Date.now();
+            const initialSeconds = timerSeconds;
             timerInterval = setInterval(() => {
-                timerSeconds--;
-                const d = document.getElementById('td');
-                if (d) d.textContent = formatTime(timerSeconds);
-                if (timerSeconds <= 0) { stopTimer(); if ('vibrate' in navigator) navigator.vibrate([200,100,
-                        200
-                    ]);
-                    document.getElementById('timerModal')?.remove(); }
-            }, 1000);
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                if (timerMode === 'timer') {
+                    timerSeconds = Math.max(0, initialSeconds - elapsed);
+                    const d = document.getElementById('td');
+                    if (d) d.textContent = formatTime(timerSeconds);
+                    if (timerSeconds <= 0) {
+                        stopTimer();
+                        if ('vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 200]);
+                        document.getElementById('timerModal')?.remove();
+                    }
+                } else {
+                    timerSeconds = elapsed;
+                    const d = document.getElementById('td');
+                    if (d) d.textContent = formatTime(timerSeconds);
+                }
+            }, 200);
         }
 
         function stopTimer() { if (timerInterval) { clearInterval(timerInterval);
@@ -598,20 +552,17 @@
             checkSleepPenalty();
             checkStreakWarning();
 
-            let html = `<h1>⚔️ Life RPG</h1><div class="subtitle">v2.7 — Паутина</div>
+            let html = `<h1>⚔️ Life RPG</h1><div class="subtitle">v2.8</div>
             <div class="settings-bar">${['dark','light','forest','fire','ocean','sakura','minimal','retro'].map(t=>`<div class="theme-dot ${t}${data.theme===t?' active':''}" onclick="setTheme('${t}')"></div>`).join('')}</div>
             <div class="tab-bar">
                 <div class="tab${currentTab==='main'?' active':''}" onclick="currentTab='main';render()">🎮</div>
-                <div class="tab${currentTab==='web'?' active':''}" onclick="currentTab='web';render()">🕸️</div>
-                <div class="tab${currentTab==='timer'?' active':''}" onclick="currentTab='timer';render()">⏱️</div>
+                <div class="tab${currentTab==='timer'?' active':''}" onclick="currentTab='timer';openTimerModal()">⏱️</div>
                 <div class="tab${currentTab==='custom'?' active':''}" onclick="currentTab='custom';render()">✏️</div>
                 <div class="tab${currentTab==='history'?' active':''}" onclick="currentTab='history';renderHistoryCalendar()">📆</div>
                 <div class="tab${currentTab==='rewards'?' active':''}" onclick="currentTab='rewards';render()">🎁</div>
             </div>`;
 
             if (currentTab === 'main') html += renderMain();
-            else if (currentTab === 'web') html += renderWeb();
-            else if (currentTab === 'timer') html += renderTimer();
             else if (currentTab === 'custom') html += renderCustom();
             else if (currentTab === 'rewards') html += renderRewards();
 
@@ -653,6 +604,17 @@
                 h +=
                     `<div class="task daily-bonus${d?' completed':''}"><div class="task-info"><div class="task-name">${t.name}</div><div class="task-reward">+${t.reward} XP (x${t.maxOver})</div>${c>1?`<div class="task-counter">${c}/${t.maxOver}</div>`:''}</div><div>${c>0?`<button class="btn btn-undo" onclick="undoTask('${t.id}',false)">↩</button>`:''}${c<t.maxOver?`<button class="btn ${d?'btn-over':'btn-done'}" onclick="completeTask('${t.id}',false,this)">${d?'+1':'✓'}</button>`:'MAX'}</div></div>`;
             }
+            // Свои задания в общем списке
+            let todayCustom = data.customTasks.filter(t => t.date === getDateKey() || !t.date);
+            if (todayCustom.length > 0) {
+                h += '<div class="section-title">✏️ Свои задания</div>';
+                for (let t of todayCustom) {
+                    let c = data.todayDaily[t.id] || 0,
+                        d = c >= 1;
+                    h +=
+                        `<div class="task${d?' completed':''}"><div class="task-info"><div class="task-name">✏️ ${t.name}</div><div class="task-reward">+${t.reward} XP (x${t.maxOver})</div>${c>1?`<div class="task-counter">${c}/${t.maxOver}</div>`:''}</div><div>${c>0?`<button class="btn btn-undo" onclick="undoTask('${t.id}',false)">↩</button>`:''}${c<t.maxOver?`<button class="btn ${d?'btn-over':'btn-done'}" onclick="completeTask('${t.id}',false,this)">${d?'+1':'✓'}</button>`:'MAX'}</div></div>`;
+                }
+            }
             h += '<div class="section-title">🌙 Сон</div><div class="sleep-section">';
             let ss, bs = 'block',
                 bw = 'none';
@@ -665,80 +627,12 @@
             return h;
         }
 
-        function renderWeb() {
-            let h = '<h3 style="text-align:center;color:var(--gold)">🕸️ Паутина достижений</h3>';
-            h += '<div style="text-align:center;font-size:10px;color:var(--subtext);margin-bottom:8px">Выполняй задание ветки каждый день</div>';
-
-            // SVG паутина
-            const cx = 180,
-                cy = 180,
-                r = 150;
-            const branches = Object.entries(data.webBranches);
-            const n = branches.length;
-            h +=
-                `<div class="web-container"><svg class="web-svg" viewBox="0 0 360 360">`;
-            // Рисуем линии от центра к узлам
-            for (let i = 0; i < n; i++) {
-                const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-                const x = cx + r * Math.cos(angle);
-                const y = cy + r * Math.sin(angle);
-                const [bid, branch] = branches[i];
-                const active = branch.progress > 0 && !branch.broken;
-                // Линия
-                h +=
-                    `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="web-line${active?' active':''}"/>`;
-                // Узлы на линии
-                const chain = branch.chain;
-                for (let j = 0; j < chain.length; j++) {
-                    const dist = (j + 1) / (chain.length + 1) * r;
-                    const nx = cx + dist * Math.cos(angle);
-                    const ny = cy + dist * Math.sin(angle);
-                    const unlocked = branch.progress >= chain[j] && !branch.broken;
-                    h +=
-                        `<circle cx="${nx}" cy="${ny}" r="${6+unlocked*3}" class="web-node${unlocked?' unlocked':''}"><title>${branch.name}: ${chain[j]} дн.</title></circle>`;
-                }
-                // Метка ветки
-                const lx = cx + (r + 25) * Math.cos(angle);
-                const ly = cy + (r + 25) * Math.sin(angle);
-                h +=
-                    `<text x="${lx}" y="${ly}" class="web-branch-label">${branch.name.split(' ')[0]}</text>`;
-                // Прогресс
-                const px = cx + (r + 40) * Math.cos(angle);
-                const py = cy + (r + 40) * Math.sin(angle);
-                h +=
-                    `<text x="${px}" y="${py}" class="web-label" fill="var(--gold)">${branch.progress} дн.</text>`;
-            }
-            h += '</svg></div>';
-
-            // Легенда и кнопки восстановления
-            h += '<div class="web-legend">';
-            for (let [bid, branch] of branches) {
-                h +=
-                    `<div class="web-legend-item"><div class="web-legend-dot${branch.progress>0&&!branch.broken?' unlocked':''}"></div><span>${branch.name.split(' ')[0]}</span>`;
-                if (branch.broken) h +=
-                    ` <button class="btn btn-restore" onclick="restoreWebBranch('${bid}')">🩹 Восст.</button>`;
-                if (branch.progress > 0 && !branch.broken && branch.restored) h +=
-                    ' <span style="color:#ff9800">⚠️</span>';
-                h += '</div>';
-            }
-            h += '</div>';
-            h +=
-                '<div style="font-size:8px;color:var(--subtext);text-align:center">Пропуск → 1 восстановление → второй пропуск = обнуление</div>';
-            h +=
-                `<button class="btn btn-undo" style="display:block;margin:10px auto" onclick="currentTab='main';render()">← Назад</button>`;
-            return h;
-        }
-
-        function renderTimer() {
-            return `<div style="text-align:center;padding:20px"><h3 style="color:var(--gold)">⏱️ Таймер</h3><div class="timer-btns">${[1,3,5,10,15,20].map(m=>`<button class="btn btn-done" onclick="startTimer(${m*60})">${m} мин</button>`).join('')}</div><button class="btn btn-undo" style="margin-top:10px" onclick="currentTab='main';render()">← Назад</button></div>`;
-        }
-
         function renderCustom() {
             let h = '<h3 style="color:var(--gold);text-align:center">✏️ Свои задания</h3>';
             h +=
-                `<div class="task" style="flex-direction:column;align-items:stretch"><input id="cName" placeholder="Название" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><select id="cStat" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><option value="health">❤️ Здоровье</option><option value="sport">💪 Спорт</option><option value="mind">🧠 Самопознание</option><option value="hygiene">✨ Гигиена</option></select><input id="cXp" type="number" value="20" placeholder="XP" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><input id="cMax" type="number" value="3" placeholder="Макс повторений" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><select id="cBranch" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><option value="">Без ветки</option><option value="custom1">✏️ Своя ветка 1</option><option value="custom2">✏️ Своя ветка 2</option></select><button class="btn btn-add" onclick="addCustomFromForm()">➕ Добавить</button></div>`;
+                `<div class="task" style="flex-direction:column;align-items:stretch"><input id="cName" placeholder="Название" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><select id="cStat" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><option value="health">❤️ Здоровье</option><option value="sport">💪 Спорт</option><option value="mind">🧠 Самопознание</option><option value="hygiene">✨ Гигиена</option></select><input id="cXp" type="number" value="20" placeholder="XP" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><input id="cMax" type="number" value="3" placeholder="Макс повторений" style="width:100%;padding:8px;margin:3px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><button class="btn btn-add" onclick="addCustomFromForm()">➕ Добавить</button></div>`;
             if (data.customTasks.length > 0) {
-                h += '<div style="margin-top:8px">';
+                h += '<div style="margin-top:8px"><div class="section-title">📝 Созданные</div>';
                 for (let t of data.customTasks) {
                     h +=
                         `<div class="task"><div class="task-info"><div class="task-name">✏️ ${t.name}</div><div class="task-reward">+${t.reward} XP → ${getStatName(t.stat)}</div></div><button class="btn btn-undo" onclick="deleteCustomTask('${t.id}')">🗑️</button></div>`;
@@ -754,7 +648,7 @@
             const name = document.getElementById('cName')?.value.trim();
             if (!name) return;
             addCustomTask(name, document.getElementById('cStat')?.value, document.getElementById('cXp')?.value, document
-                .getElementById('cMax')?.value, document.getElementById('cBranch')?.value);
+                .getElementById('cMax')?.value);
             render();
         }
 
@@ -825,6 +719,10 @@
             setInterval(() => { checkSleepPenalty();
                 checkStreakWarning(); }, 60000);
             if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+            // Регистрация Service Worker для PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/life-rpg/sw.js').catch(() => {});
+            }
         }
         init();
     </script>
